@@ -23,6 +23,11 @@ class MainActivity : Activity() {
         mBinding?.test1?.setOnClickListener {
             LogUtil.d(TAG, "click test1")
             mJniObject.test1()
+            mJniObject.test2(1, "apple", true, object : JniObject.Callback() {
+                override fun test(a: Int, b: String, c: Boolean) {
+                    LogUtil.d(TAG, "Callback call a=$a b=$b c=$c")
+                }
+            })
         }
     }
 }
