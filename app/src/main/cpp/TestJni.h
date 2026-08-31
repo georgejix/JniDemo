@@ -2,13 +2,17 @@
 #define TESTJNI_H_SRC
 
 #include <jni.h>
+#include <android/log.h>
+
+#define LOGI(format, ...)  __android_log_print(ANDROID_LOG_INFO,  "JniLog", format, ##__VA_ARGS__)
+#define LOGE(format, ...)  __android_log_print(ANDROID_LOG_ERROR,  "JniLog", format, ##__VA_ARGS__)
+#define LOGD(format, ...)  __android_log_print(ANDROID_LOG_DEBUG,  "JniLog", format, ##__VA_ARGS__)
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-JNIEXPORT jint JNICALL Java_com_jx_jnidemo_jni_JniObject_test1
-        (JNIEnv *, jclass);
+jint test1(JNIEnv *env, jobject obj);
 
 #ifdef __cplusplus
 }
