@@ -28,6 +28,7 @@ class MainActivity : Activity() {
                     LogUtil.d(TAG, "Callback call a=$a b=$b c=$c")
                 }
             })
+            mJniObject.test3()
         }
     }
 }

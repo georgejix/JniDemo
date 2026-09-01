@@ -3,6 +3,7 @@
 
 #include <jni.h>
 #include <android/log.h>
+#include <pthread.h>
 
 #define LOGI(format, ...)  __android_log_print(ANDROID_LOG_INFO,  "JniLog", format, ##__VA_ARGS__)
 #define LOGE(format, ...)  __android_log_print(ANDROID_LOG_ERROR,  "JniLog", format, ##__VA_ARGS__)
@@ -14,6 +15,7 @@ extern "C" {
 
 jint test1(JNIEnv *env, jobject obj);
 jint test2(JNIEnv *env, jobject obj, jint a, jstring b, jboolean c, jclass d);
+jint test3(JNIEnv *env, jobject obj);
 
 #ifdef __cplusplus
 }

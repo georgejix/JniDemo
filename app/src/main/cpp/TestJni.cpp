@@ -1,5 +1,10 @@
 #include "TestJni.h"
 
+#include <errno.h>
+#include <string.h>
+#include <sys/resource.h>
+#include <sys/types.h>
+
 #define JavaJniVersion JNI_VERSION_1_6
 #define JavaClassUser  "com/jx/jnidemo/jni/JniObject"
 static JavaVM *mJavaVM = nullptr;
@@ -24,10 +29,33 @@ jint test2(JNIEnv *env, jobject obj, jint a, jstring b, jboolean c, jclass d) {
     return 0;
 }
 
+void* TestThread(void *arg) {
+    char *name = (char *) arg;
+    LOGD("TestThread name=%s", name);
+
+    // 在线程内部提升自身优先级（子线程启动后设置最可靠）
+    // 注意：SCHED_OTHER 下提升优先级即设置负 nice 值，普通应用无 root 权限会返回 EPERM
+    errno = 0;
+    LOGI("TestThread getpriority nice=%d", getpriority(PRIO_PROCESS, 0));
+    int ret = setpriority(PRIO_PROCESS, 0, 10); // 0 = 当前线程，nice 值越小优先级越高
+    LOGI("TestThread setpriority ret=%d errno=%d nice=%d",
+         ret, errno, getpriority(PRIO_PROCESS, 0));
+    return NULL;
+}
+
+jint test3(JNIEnv *env, jobject obj) {
+    LOGI("%s", "testjni3");
+    char *name = "name123";
+    pthread_t threadId;
+    pthread_create(&threadId, nullptr, TestThread, name);
+    return 0;
+}
+
 
 static const JNINativeMethod nativeMethods[] = {
-        {"test1", "()I", (void *) test1},
+        {"test1", "()I",                                                 (void *) test1},
         {"test2", "(ILjava/lang/String;ZL" JavaClassUser "$Callback;)I", (void *) test2},
+        {"test3", "()I",                                                 (void *) test3},
         //{"wlanStart",       "(Ljava/lang/String;Ljava/lang/String;)I", (void *) wlanStart},
         //{"wlanStop",       "(Ljava/lang/String;)I", (void *) wlanStop},
         //{"deviceStart",     "(Ljava/lang/String;Ljava/lang/String;)I", (void *) deviceStart},
