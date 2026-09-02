@@ -127,12 +127,106 @@ jint test4(JNIEnv *env, jobject obj) {
     return 0;
 }
 
+unsigned computeIpv6PrefixLength(struct sockaddr_in6 *Netmask) {
+    unsigned prefix_length = 0;
+    size_t i = 0;
+
+    if (Netmask == NULL) {
+        return prefix_length;
+    }
+    for (i = 0; i < sizeof(Netmask->sin6_addr); i++) {
+        while (Netmask->sin6_addr.s6_addr[i]) {
+            prefix_length += (Netmask->sin6_addr.s6_addr[i] & 0x01);
+            Netmask->sin6_addr.s6_addr[i] >>= 1;
+        }
+    }
+
+    return prefix_length;
+}
+
+jint test5(JNIEnv *env, jobject obj) {
+    LOGI("%s", "testjni5");
+    struct ifaddrs *ifap, *ifa;
+    //获取所有网卡信息
+    if (getifaddrs(&ifap) != 0) {
+        LOGE("getifaddrs err");
+        return -1;
+    }
+    for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+        //跳过回环，未启用，不支持多播的网卡
+        if (!ifa->ifa_addr || (ifa->ifa_flags & IFF_LOOPBACK) ||
+            (!(ifa->ifa_flags & IFF_UP)) ||
+            (!(ifa->ifa_flags & IFF_MULTICAST))) {
+            continue;
+        }
+        struct in_addr v4_addr = {0};
+        struct in_addr v4_netmask = {0};
+        struct in6_addr v6_addr = IN6ADDR_ANY_INIT;
+        struct in6_addr v6ulagua_addr = IN6ADDR_ANY_INIT;
+        unsigned v6_prefix = 0;
+        unsigned v6ulagua_prefix = 0;
+        switch (ifa->ifa_addr->sa_family) {
+            case AF_INET:
+                LOGD("ipv4 ifa.name=%s flag=%d", ifa->ifa_name, ifa->ifa_flags);
+                //读取ipv4的ip和网关
+                memcpy(&v4_addr,
+                       &(((struct sockaddr_in *) ifa->ifa_addr)->sin_addr),
+                       sizeof(v4_addr));
+                memcpy(&v4_netmask,
+                       &(((struct sockaddr_in *) (ifa->ifa_netmask))->sin_addr),
+                       sizeof(v4_netmask));
+                char ip[128];
+                char netmask[128];
+                //转字符串
+                if (inet_ntop(AF_INET, &v4_addr, ip, sizeof(ip)) &&
+                    inet_ntop(AF_INET, &v4_netmask, netmask, sizeof(netmask))) {
+                    LOGD("ip4=%s netmask=%s", ip, netmask);
+                }
+                break;
+            case AF_INET6:
+                LOGD("ipv6 ifa.name=%s flag=%d", ifa->ifa_name, ifa->ifa_flags);
+                char ip6[128];
+                if (IN6_IS_ADDR_ULA(
+                        &((struct sockaddr_in6 *) (ifa->ifa_addr))
+                                ->sin6_addr)) {
+                    /* Got valid IPv6 ula. */
+                    memcpy(&v6ulagua_addr,
+                           &((struct sockaddr_in6 *) (ifa->ifa_addr))->sin6_addr,
+                           sizeof(v6ulagua_addr));
+                    v6_prefix = computeIpv6PrefixLength(
+                            (struct sockaddr_in6*) (ifa->ifa_netmask));
+                    if (inet_ntop(AF_INET6,
+                                  &v6ulagua_addr,
+                                  ip6,
+                                  sizeof(ip6))) {
+                        LOGD("ip6=%s v6_prefix=%u", ip6, v6_prefix);
+                    }
+                } else if (IN6_IS_ADDR_LINKLOCAL(
+                        &((struct sockaddr_in6 *) (ifa->ifa_addr))->sin6_addr)) {
+                    memcpy(&v6_addr,
+                           &((struct sockaddr_in6 *) (ifa->ifa_addr))->sin6_addr,
+                           sizeof(v6_addr));
+                    v6_prefix = computeIpv6PrefixLength(
+                            (struct sockaddr_in6*)(ifa->ifa_netmask));
+                    if (inet_ntop(AF_INET6,
+                                  &v6_addr,
+                                  ip6,
+                                  sizeof(ip6))) {
+                        LOGD("ip6=%s v6_prefix=%u", ip6, v6_prefix);
+                    }
+                }
+                break;
+        }
+    }
+    return 0;
+}
 
 static const JNINativeMethod nativeMethods[] = {
         {"test1", "()I",                                                 (void *) test1},
         {"test2", "(ILjava/lang/String;ZL" JavaClassUser "$Callback;)I", (void *) test2},
         {"test3", "()I",                                                 (void *) test3},
         {"test4", "()I",                                                 (void *) test4},
+        {"test5", "()I",                                                 (void *) test5},
         //{"wlanStart",       "(Ljava/lang/String;Ljava/lang/String;)I", (void *) wlanStart},
         //{"wlanStop",       "(Ljava/lang/String;)I", (void *) wlanStop},
         //{"deviceStart",     "(Ljava/lang/String;Ljava/lang/String;)I", (void *) deviceStart},

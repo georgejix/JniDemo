@@ -4,6 +4,10 @@
 #include <jni.h>
 #include <android/log.h>
 #include <pthread.h>
+//网卡相关
+#include <ifaddrs.h>
+#include <net/if.h>
+#include <arpa/inet.h>
 
 //__VA_ARGS__使用 需要配合 define 使用，总体来说就是将左边宏中 ... 的内容原样抄写在右边 __VA_ARGS__ 所在的位置
 /**
@@ -28,6 +32,7 @@ jint test1(JNIEnv *env, jobject obj);
 jint test2(JNIEnv *env, jobject obj, jint a, jstring b, jboolean c, jclass d);
 jint test3(JNIEnv *env, jobject obj);
 jint test4(JNIEnv *env, jobject obj);
+jint test5(JNIEnv *env, jobject obj);
 
 #ifdef __cplusplus
 }

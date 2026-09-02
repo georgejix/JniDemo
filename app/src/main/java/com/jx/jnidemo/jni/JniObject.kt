@@ -30,5 +30,13 @@ class JniObject {
      */
     external fun test3(): Int
 
+    /**
+     * 测试函数当入参
+     */
     external fun test4(): Int
+
+    /**
+     * 测试读取网卡信息
+     */
+    external fun test5(): Int
 }
