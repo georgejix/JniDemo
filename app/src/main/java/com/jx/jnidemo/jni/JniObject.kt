@@ -29,4 +29,6 @@ class JniObject {
      * 测试pthread
      */
     external fun test3(): Int
+
+    external fun test4(): Int
 }

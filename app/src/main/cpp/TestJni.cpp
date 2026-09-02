@@ -107,11 +107,32 @@ jint test3(JNIEnv *env, jobject obj) {
     return 0;
 }
 
+int Test4Func(int a) {
+    LOGD("Test4Func a=%d", a);
+    return 0;
+}
+
+//使用函数定义当做入参
+int Test4_1Func(Test4LocalFunc func) {
+    LOGD("Test4_1Func");
+    if (func) {
+        func(54);
+    }
+    return 0;
+}
+
+jint test4(JNIEnv *env, jobject obj) {
+    LOGI("%s", "testjni4");
+    Test4_1Func(Test4Func);
+    return 0;
+}
+
 
 static const JNINativeMethod nativeMethods[] = {
         {"test1", "()I",                                                 (void *) test1},
         {"test2", "(ILjava/lang/String;ZL" JavaClassUser "$Callback;)I", (void *) test2},
-        {"test3", "()I",                    (void *) test3},
+        {"test3", "()I",                                                 (void *) test3},
+        {"test4", "()I",                                                 (void *) test4},
         //{"wlanStart",       "(Ljava/lang/String;Ljava/lang/String;)I", (void *) wlanStart},
         //{"wlanStop",       "(Ljava/lang/String;)I", (void *) wlanStop},
         //{"deviceStart",     "(Ljava/lang/String;Ljava/lang/String;)I", (void *) deviceStart},

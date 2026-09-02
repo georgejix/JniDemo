@@ -29,6 +29,7 @@ class MainActivity : Activity() {
                 }
             })
             mJniObject.test3()
+            mJniObject.test4()
         }
     }
 }
