@@ -8,6 +8,26 @@
 #define JavaJniVersion JNI_VERSION_1_6
 #define JavaClassUser  "com/jx/jnidemo/jni/JniObject"
 static JavaVM *mJavaVM = nullptr;
+JNIEnv *mJniEnv;
+jobject mCb;
+
+//绑定线程到jnienv
+bool bindThread(bool attach) {
+    JavaVMAttachArgs args = {JavaJniVersion, "DLNA_Thread", NULL};
+    if (attach) {
+        if (mJavaVM->GetEnv((void **) &mJniEnv, JavaJniVersion) != JNI_OK) {
+            if (mJavaVM->AttachCurrentThread(&mJniEnv, &args) != JNI_OK) {
+                LOGE("Failed to attach thread");
+                return false;
+            }
+        }
+    } else {
+        if (mJniEnv) {
+            mJavaVM->DetachCurrentThread();
+        }
+    }
+    return true;
+}
 
 jint test1(JNIEnv *env, jobject obj) {
     LOGI("%s", "testjni1");
@@ -16,20 +36,26 @@ jint test1(JNIEnv *env, jobject obj) {
 
 jint test2(JNIEnv *env, jobject obj, jint a, jstring b, jboolean c, jclass d) {
     const char *str_b = env->GetStringUTFChars(b, NULL);
+    mJniEnv = env;
+    mCb = env->NewGlobalRef(d);
     jobject cb = env->NewLocalRef(d);
     LOGI("testjni2 a=%d b=%s c=%s", a, str_b, c ? "true" : "false");
     jclass callback = env->GetObjectClass(cb);
-    jmethodID methodId = env->GetMethodID(callback, "test", "(ILjava/lang/String;Z)V");
-    char *str = "aaa";
-    jstring str_cb = env->NewStringUTF(str);
-    env->CallVoidMethod(cb, methodId, 2, str_cb, false);
-    env->DeleteLocalRef(str_cb);
-    env->ReleaseStringUTFChars(b, str_b);
-    env->DeleteLocalRef(cb);
+    if (callback) {
+        jmethodID methodId = env->GetMethodID(callback, "test", "(ILjava/lang/String;Z)V");
+        if (methodId) {
+            char *str = "aaa";
+            jstring str_cb = env->NewStringUTF(str);
+            env->CallVoidMethod(cb, methodId, 2, str_cb, false);
+            env->DeleteLocalRef(str_cb);
+            env->ReleaseStringUTFChars(b, str_b);
+            env->DeleteLocalRef(cb);
+        }
+    }
     return 0;
 }
 
-void* TestThread(void *arg) {
+void *TestThread(void *arg) {
     char *name = (char *) arg;
     LOGD("TestThread name=%s", name);
 
@@ -40,6 +66,24 @@ void* TestThread(void *arg) {
     int ret = setpriority(PRIO_PROCESS, 0, 10); // 0 = 当前线程，nice 值越小优先级越高
     LOGI("TestThread setpriority ret=%d errno=%d nice=%d",
          ret, errno, getpriority(PRIO_PROCESS, 0));
+    if (mJniEnv && mCb) {
+        //线程调用java函数，需要通过AttachCurrentThread获取属于该线程的JNIEnv
+        bool bind = !bindThread(true);
+        jclass callback = mJniEnv->GetObjectClass(mCb);
+        if (callback) {
+            jmethodID methodId = mJniEnv->GetMethodID(callback, "test", "(ILjava/lang/String;Z)V");
+            if (methodId) {
+                LOGI("TestThread call test3cb");
+                char *str = "aaa";
+                jstring str_cb = mJniEnv->NewStringUTF(str);
+                mJniEnv->CallVoidMethod(mCb, methodId, 35, str_cb, false);
+                mJniEnv->DeleteLocalRef(str_cb);
+            }
+        }
+        if (bind) {
+            bindThread(false);
+        }
+    }
     return NULL;
 }
 
@@ -55,7 +99,7 @@ jint test3(JNIEnv *env, jobject obj) {
 static const JNINativeMethod nativeMethods[] = {
         {"test1", "()I",                                                 (void *) test1},
         {"test2", "(ILjava/lang/String;ZL" JavaClassUser "$Callback;)I", (void *) test2},
-        {"test3", "()I",                                                 (void *) test3},
+        {"test3", "()I",                    (void *) test3},
         //{"wlanStart",       "(Ljava/lang/String;Ljava/lang/String;)I", (void *) wlanStart},
         //{"wlanStop",       "(Ljava/lang/String;)I", (void *) wlanStop},
         //{"deviceStart",     "(Ljava/lang/String;Ljava/lang/String;)I", (void *) deviceStart},

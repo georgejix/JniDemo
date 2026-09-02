@@ -11,6 +11,10 @@ class JniObject {
         abstract fun test(a: Int, b: String, c: Boolean)
     }
 
+    abstract class Callback2 {
+        abstract fun test(a: Int)
+    }
+
     /**
      * 无参函数
      */

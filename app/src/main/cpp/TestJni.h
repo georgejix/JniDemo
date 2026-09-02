@@ -13,6 +13,7 @@
 extern "C" {
 #endif
 
+bool bindThread(bool attach);
 jint test1(JNIEnv *env, jobject obj);
 jint test2(JNIEnv *env, jobject obj, jint a, jstring b, jboolean c, jclass d);
 jint test3(JNIEnv *env, jobject obj);
