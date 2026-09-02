@@ -61,11 +61,23 @@ void *TestThread(void *arg) {
 
     // 在线程内部提升自身优先级（子线程启动后设置最可靠）
     // 注意：SCHED_OTHER 下提升优先级即设置负 nice 值，普通应用无 root 权限会返回 EPERM
+    //修改线程nice
     errno = 0;
     LOGI("TestThread getpriority nice=%d", getpriority(PRIO_PROCESS, 0));
     int ret = setpriority(PRIO_PROCESS, 0, 10); // 0 = 当前线程，nice 值越小优先级越高
     LOGI("TestThread setpriority ret=%d errno=%d nice=%d",
          ret, errno, getpriority(PRIO_PROCESS, 0));
+
+    //修改线程优先级
+    struct sched_param param;
+    param.sched_priority = sched_get_priority_max(SCHED_FIFO); // 设置优先级
+    LOGD("runReadThread priority %d", param.sched_priority);
+    ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
+    struct sched_param param2;
+    int policy;
+    pthread_getschedparam(pthread_self(), &policy, &param2);
+    LOGD("pthread_getschedparam priority=%d ret=%d", param2.sched_priority, ret);
+
     if (mJniEnv && mCb) {
         //线程调用java函数，需要通过AttachCurrentThread获取属于该线程的JNIEnv
         bool bind = !bindThread(true);
