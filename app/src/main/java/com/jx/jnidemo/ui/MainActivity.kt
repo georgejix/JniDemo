@@ -31,6 +31,7 @@ class MainActivity : Activity() {
             mJniObject.test3()
             mJniObject.test4()
             mJniObject.test5()
+            mJniObject.test6()
         }
     }
 }

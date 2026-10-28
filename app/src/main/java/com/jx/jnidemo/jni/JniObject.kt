@@ -39,4 +39,9 @@ class JniObject {
      * 测试读取网卡信息
      */
     external fun test5(): Int
+
+    /**
+     * 测试一下c++函数
+     */
+    external fun test6(): Int
 }

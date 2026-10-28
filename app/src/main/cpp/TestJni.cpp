@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/resource.h>
 #include <sys/types.h>
+#include "TestCpp1.h"
 
 #define JavaJniVersion JNI_VERSION_1_6
 #define JavaClassUser  "com/jx/jnidemo/jni/JniObject"
@@ -221,12 +222,19 @@ jint test5(JNIEnv *env, jobject obj) {
     return 0;
 }
 
+jint test6(JNIEnv *env, jobject obj) {
+    LOGD("test6");
+    testCpp1();
+    return 0;
+}
+
 static const JNINativeMethod nativeMethods[] = {
         {"test1", "()I",                                                 (void *) test1},
         {"test2", "(ILjava/lang/String;ZL" JavaClassUser "$Callback;)I", (void *) test2},
         {"test3", "()I",                                                 (void *) test3},
         {"test4", "()I",                                                 (void *) test4},
         {"test5", "()I",                                                 (void *) test5},
+        {"test6", "()I",                                                 (void *) test6},
         //{"wlanStart",       "(Ljava/lang/String;Ljava/lang/String;)I", (void *) wlanStart},
         //{"wlanStop",       "(Ljava/lang/String;)I", (void *) wlanStop},
         //{"deviceStart",     "(Ljava/lang/String;Ljava/lang/String;)I", (void *) deviceStart},
